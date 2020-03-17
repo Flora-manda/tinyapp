@@ -16,16 +16,23 @@ const urlDatabase = {
 function generateRandomString() {
   let result = '';
   let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let charLength = chars.length;
-  for ( var i = 0; i < length; i++ ) {
-    result += chars.charAt(Math.floor(Math.random() * charLength));
+  for ( var i = 0; i < 6; i++ ) {
+    result += chars.charAt(Math.floor(Math.random() * 62));
   }
    return result;
 };
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  console.log(urlDatabase);
+  res.redirect(longURL);
+});
+
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  let shortURL = generateRandomString(6);
+  urlDatabase[shortURL] = req.body.longURL; //How can i save this to the database?
+  //console.log(req.body, { shortURL: shortString });  // Log the POST request body to the console
+  res.redirect(`/urls/${shortURL}`);         // Redirects to the url_show template 
 });
 
 app.get("/urls/new", (req, res) => {
