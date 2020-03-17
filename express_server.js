@@ -34,6 +34,12 @@ const updateURL = (shortURL, longURL) => {
 }
 //------------------Functions-----------------------//
 
+//Endpoint to handle POST request to logout
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
+
 //Endpoint to handle POST request
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username)
