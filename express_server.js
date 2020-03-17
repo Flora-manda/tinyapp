@@ -12,6 +12,17 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//Generates random string for shortURL
+function generateRandomString() {
+  let result = '';
+  let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let charLength = chars.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += chars.charAt(Math.floor(Math.random() * charLength));
+  }
+   return result;
+};
+
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   res.send("Ok");         // Respond with 'Ok' (we will replace this)
