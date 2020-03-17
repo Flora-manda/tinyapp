@@ -22,6 +22,23 @@ function generateRandomString() {
    return result;
 };
 
+//To update longURL in db
+const updateURL = (shortURL, longURL) => {
+  urlDatabase[shortURL] = longURL;
+  return true;
+}
+
+//To edit shortURL key/property
+app.post("/urls/:shortURL", (req, res) => {
+
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
+
+  updateURL(shortURL, longURL);
+
+  res.redirect("/urls");
+});
+
 //To delete shortURL key/property
 app.post("/urls/:shortURL/delete", (req, res) => {
 
