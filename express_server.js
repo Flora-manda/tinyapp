@@ -91,7 +91,6 @@ app.post("/register", (req, res) => {
   } else if (!checkUserByEmail(email)) {
     const userId = addNewUser(email, password);
     res.cookie("user_id", userId);
-    console.log(users);
     res.redirect("/urls");
   } else {
     res.status(403).send('There is a user already registered with this email!');
@@ -104,12 +103,26 @@ app.get("/register", (req, res) => {
   const loggedInUser = users[userId];
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], currentUser: loggedInUser };
   res.render("urls_register", templateVars);
-});
+});express
 
-//Endpoint to handle POST request to logout
-app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/urls");
+//Endpoint to handle POST request
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const userId = checkUserByEmail(email);
+
+  if (email === "" || password === "") {
+    res.status(403).send('Please enter a valid email or password to login!');
+  } else if (!userId.email) {
+    res.status(403).send('User with this email cannot be found!');
+  } else if (userId.email) {
+      if (password !== userId.password) {
+        res.status(403).send('Incorrect password!');
+      } else {
+    res.cookie("user_id", userId.id);
+    res.redirect("/urls");
+    }
+  }
 });
 
 //Endpoint to handle Login page / GET request
@@ -120,9 +133,9 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-//Endpoint to handle POST request
-app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.user_id)
+//Endpoint to handle POST request to logout
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
