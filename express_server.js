@@ -39,6 +39,16 @@ const users = {
 
 //-----------------------START - FUNCTIONS------------------------//
 
+//Check if user already exists
+const checkUserByEmail = email => {
+  for (let userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return false;
+};
+
 //Create new user 
 const addNewUser = (email, password) => {
   const userId = generateRandomString(13);
@@ -76,9 +86,15 @@ const updateURL = (shortURL, longURL) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const userId = addNewUser(email, password);
-  res.cookie("user_id", userId);
-  res.redirect("/urls");
+  if (email === "" || password === "") {
+    res.status(400).send('Please enter a valid email or password to register!');
+  } else if (!checkUserByEmail(email)) {
+    const userId = addNewUser(email, password);
+    res.cookie("user_id", userId);
+    res.redirect("/urls");
+  } else {
+    res.status(403).send('There is a user already registered with this email!');
+  }
 });
 
 //To GET/request registration page
