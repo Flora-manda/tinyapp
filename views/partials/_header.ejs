@@ -18,11 +18,8 @@
           <button class="btn btn-link collapsed" type="submit"><span class="navbar-brand">Logout</span></button>
        </form>
       <% } else { %>
-        <form method="POST" action="/login">
-          <input name="user_id">
-          <button class="btn btn-link collapsed" type="submit">login</button>
+          <button class="btn btn-link collapsed" type="submit"><a href = "/login">Login</a></button>
           <button class="btn btn-link collapsed" type="submit"><a href='/register'>Register</a></button>
-       </form>
       <% } %>
    </div>
   </nav>
