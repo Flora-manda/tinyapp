@@ -34,6 +34,12 @@ const updateURL = (shortURL, longURL) => {
 }
 //------------------Functions-----------------------//
 
+//To GET/request registration page
+app.get("/register", (req, res) => {
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  res.render("urls_register", templateVars);
+});
+
 //Endpoint to handle POST request to logout
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
