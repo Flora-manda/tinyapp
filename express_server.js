@@ -1,3 +1,4 @@
+//-------------------------START - MODULES---------------------------//
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -9,14 +10,47 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
+//---------------------------END- MODULES----------------------------//
 
-//In-memory DB
+
+
+//------------------START - IN MEMORY DATABASE-----------------------//
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-//------------------Functions-----------------------//
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+//------------------END - IN MEMORY DATABASE-----------------------//
+
+
+
+
+//-----------------------START - FUNCTIONS------------------------//
+
+//Create new user 
+const addNewUser = (email, password) => {
+  const userId = generateRandomString(13);
+  const newUserObj = {
+    id: userId, 
+    email, 
+    password
+  }
+  users[userId] = newUserObj;
+  return userId;
+};
+  
 //Generates random string for shortURL
 function generateRandomString() {
   let result = '';
@@ -32,23 +66,38 @@ const updateURL = (shortURL, longURL) => {
   urlDatabase[shortURL] = longURL;
   return true;
 }
-//------------------Functions-----------------------//
+//-----------------------END - FUNCTIONS------------------------//
+
+
+
+//-------------------START - SERVER LOGIC-----------------------//
+
+//POST /register endpoint
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const userId = addNewUser(email, password);
+  res.cookie("user_id", userId);
+  res.redirect("/urls");
+});
 
 //To GET/request registration page
 app.get("/register", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const userId = req.cookies['user_id'];
+  const loggedInUser = users[userId];
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], currentUser: loggedInUser };
   res.render("urls_register", templateVars);
 });
 
 //Endpoint to handle POST request to logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
 //Endpoint to handle POST request
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username)
+  res.cookie("user_id", req.body.user_id)
   res.redirect("/urls");
 });
 
@@ -86,17 +135,23 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username: req.cookies["username"] };
+  const userId = req.cookies['user_id'];
+  const loggedInUser = users[userId];
+  let templateVars = { currentUser: loggedInUser };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const userId = req.cookies['user_id'];
+  const loggedInUser = users[userId];
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], currentUser: loggedInUser };
   res.render("urls_show", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userId = req.cookies['user_id'];
+  const loggedInUser = users[userId];
+  let templateVars = { urls: urlDatabase, currentUser: loggedInUser };
   res.render("urls_index", templateVars);
 });
 
@@ -124,3 +179,4 @@ app.get("/set", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+//----------------------END - SERVER LOGIC-------------------------//
