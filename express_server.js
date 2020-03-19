@@ -1,4 +1,5 @@
-//-------------------------START - MODULES---------------------------//
+////////////////////////////////////////////////////////////////
+/////////////////////////---MODULES---/////////////////////////
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -10,14 +11,12 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
-//---------------------------END- MODULES----------------------------//
 
-
-
-//------------------START - IN MEMORY DATABASE-----------------------//
+///////////////////////////////////////////////////////////////
+//////////////////--- IN MEMORY DATABASE---///////////////////
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { shortURL: "b2xVn2", longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
+  "9sm5xK": { shortURL: "9sm5xK", longURL: "http://www.google.com", userID: "user2RandomID" }
 };
 
 const users = { 
@@ -31,15 +30,36 @@ const users = {
     email: "user2@example.com", 
     password: "dishwasher-funk"
   }
-}
-//------------------END - IN MEMORY DATABASE-----------------------//
+};
 
+////////////////////////////////////////////////////////////////////
+////////////////////////---FUNCTIONS---////////////////////////////
 
+//Fuction that returns URL to logged in user in their account
+const urlsForUser = (id) => {
+  let result = [];
+  for (let urlId in urlDatabase) {
+    if (urlDatabase[urlId].userID === id) {
+      result.push(urlDatabase[urlId]);
+    }
+  }
+  console.log(result);
+  return result;
+};
 
+//To add new longURL and userID in db
+const addURL = (longURL, userID) => {
+  let shortURL = generateRandomString(6);
+  const newObj = {
+    shortURL,
+    longURL,
+    userID
+  };
+  urlDatabase[shortURL] = newObj;
+  return shortURL;
+};
 
-//-----------------------START - FUNCTIONS------------------------//
-
-//Check if user already exists
+//Check if user already exists in db
 const checkUserByEmail = email => {
   for (let userId in users) {
     if (users[userId].email === email) {
@@ -49,7 +69,7 @@ const checkUserByEmail = email => {
   return false;
 };
 
-//Create new user 
+//Create new user in db
 const addNewUser = (email, password) => {
   const userId = generateRandomString(13);
   const newUserObj = {
@@ -73,16 +93,14 @@ function generateRandomString() {
 
 //To update longURL in db
 const updateURL = (shortURL, longURL) => {
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL].longURL = longURL;
   return true;
-}
-//-----------------------END - FUNCTIONS------------------------//
+};
 
+////////////////////////////////////////////////////////////////////
+//////////////////////---SERVER LOGIC---///////////////////////////
 
-
-//-------------------START - SERVER LOGIC-----------------------//
-
-//POST /register endpoint
+//Register endpoint for POST request
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -97,15 +115,16 @@ app.post("/register", (req, res) => {
   }
 });
 
-//To GET/request registration page
+//Register endpoint for GET request
 app.get("/register", (req, res) => {
   const userId = req.cookies['user_id'];
   const loggedInUser = users[userId];
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], currentUser: loggedInUser };
+  let templateVars = { currentUser: loggedInUser };
   res.render("urls_register", templateVars);
 });express
 
-//Endpoint to handle POST request
+
+//Login endpoint for POST request
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -125,96 +144,92 @@ app.post("/login", (req, res) => {
   }
 });
 
-//Endpoint to handle Login page / GET request
+//Login endpoint for GET request
 app.get("/login", (req, res) => {
   const userId = req.cookies['user_id'];
   const loggedInUser = users[userId];
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], currentUser: loggedInUser };
+  let templateVars = { currentUser: loggedInUser };
   res.render("urls_login", templateVars);
 });
 
-//Endpoint to handle POST request to logout
+//Logout endpoint for POST request
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
-//To edit shortURL key/property
+//Edit shortURL key/property only if user is logged in
 app.post("/urls/:shortURL", (req, res) => {
-
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-
   updateURL(shortURL, longURL);
-
   res.redirect("/urls");
 });
 
-//To delete shortURL key/property
+//Delete shortURL key/property only if user is logged in
 app.post("/urls/:shortURL/delete", (req, res) => {
-
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-
-  res.redirect("/urls");
+  if (shortURL === urlDatabase[shortURL].userID) {
+    delete urlDatabase[shortURL];
+  } else {
+     res.redirect("/urls");
+  }
 });
 
+//longURL redirect endpoint for GET request
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  console.log(urlDatabase);
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
+//Edit URLS endpoint for POST request
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString(6);
-  urlDatabase[shortURL] = req.body.longURL; //How can i save this to the database?
-  //console.log(req.body, { shortURL: shortString });  // Log the POST request body to the console
-  res.redirect(`/urls/${shortURL}`);         // Redirects to the url_show template 
+  const userId = req.cookies["user_id"];
+  const longURL = req.body.longURL;
+  const shortURL = addURL(longURL, userId);
+  const loggedInUser = users[userId];
+  let templateVars = { shortURL, longURL, currentUser: loggedInUser };
+  res.render("urls_show", templateVars);     // Redirects to the url_show template 
 });
 
+//To check user database
+app.get("/urls/json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+//Create new URL endpoint (GET request) if the user is logged in
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies['user_id'];
   const loggedInUser = users[userId];
   let templateVars = { currentUser: loggedInUser };
-  res.render("urls_new", templateVars);
+  if (userId) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.render("urls_login", templateVars);
+  }
 });
 
+//Create new URL endpoint via GET request only if user is logged
 app.get("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
   const userId = req.cookies['user_id'];
   const loggedInUser = users[userId];
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], currentUser: loggedInUser };
-  res.render("urls_show", templateVars);
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, currentUser: loggedInUser };
+  if (shortURL === urlDatabase[shortURL].userID) {
+    res.render("urls_show", templateVars);
+  }
 });
 
+//Homepage for TinyApp: will show no URL if not logged in
 app.get("/urls", (req, res) => {
   const userId = req.cookies['user_id'];
   const loggedInUser = users[userId];
-  let templateVars = { urls: urlDatabase, currentUser: loggedInUser };
+  const urls = urlsForUser(userId);
+  let templateVars = { urls, currentUser: loggedInUser };
   res.render("urls_index", templateVars);
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
- });
-
- app.get("/fetch", (req, res) => {
-  res.send(`a = ${a}`);
- });
-
+//Server listening on PORT 8080
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-//----------------------END - SERVER LOGIC-------------------------//
