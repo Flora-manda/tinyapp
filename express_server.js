@@ -4,13 +4,16 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 app.use(cookieParser());
 
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
+
 
 ///////////////////////////////////////////////////////////////
 //////////////////--- IN MEMORY DATABASE---///////////////////
@@ -72,11 +75,15 @@ const checkUserByEmail = email => {
 //Create new user in db
 const addNewUser = (email, password) => {
   const userId = generateRandomString(13);
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hash = bcrypt.hashSync(password, salt);
+
   const newUserObj = {
     id: userId, 
     email, 
-    password
+    password: hash
   }
+
   users[userId] = newUserObj;
   return userId;
 };
@@ -135,7 +142,7 @@ app.post("/login", (req, res) => {
   } else if (!userId.email) {
     res.status(403).send('User with this email cannot be found!');
   } else if (userId.email) {
-      if (password !== userId.password) {
+      if (!bcrypt.compareSync(password, userId.password)) {
         res.status(403).send('Incorrect password!');
       } else {
     res.cookie("user_id", userId.id);
@@ -192,9 +199,14 @@ app.post("/urls", (req, res) => {
   res.render("urls_show", templateVars);     // Redirects to the url_show template 
 });
 
-//To check user database
+//To check URL database
 app.get("/urls/json", (req, res) => {
   res.json(urlDatabase);
+});
+
+//To check user database
+app.get("/users/json", (req, res) => {
+  res.json(users);
 });
 
 //Create new URL endpoint (GET request) if the user is logged in
