@@ -5,8 +5,8 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>URL - TinyApp</title>
 </head>
-
 <body>
+  <main style="margin: 1em;"></main>
   <h3><%- include('./partials/_header') %></h3>
   <div class="card text-center">
       <div class="card-header"></div>
@@ -21,7 +21,7 @@
     <form method="POST" action="/urls/<%= shortURL %>">
       New URL:
     <input type="text" name="longURL">
-    <input type="submit" value="Submit">
+    <input class="btn btn-primary" type="submit" value="Submit">
     </form>
   </div>
   <!-- Bootstrap JS -->

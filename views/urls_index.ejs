@@ -28,19 +28,24 @@
           <tr>
             <td><%= url.shortURL %></td>
             <td><%= url.longURL %></td>
+            
             <td>
-              <form method="GET" action="/urls/<%= url %>">
-                <button class="btn btn-link collapsed" type="submit">
+              <% if (currentUser.id === url.userID) { %>
+              <form method="GET" action="/urls/<%= url.shortURL %>">
+                <button class="btn btn-primary" type="submit">
                   edit
                 </button>
               </form>
+              <% } %>
             </td>
             <td>
-              <form method="POST" action="/urls/<%= url %>/delete">
-                <button class="btn btn-link collapsed" type="submit">
+              <% if (currentUser.id === url.userID) { %>
+              <form method="POST" action="/urls/<%= url.shortURL %>/delete">
+                <button class="btn btn-primary" type="submit">
                   delete
                 </button>
               </form>
+              <% } %>
             </td>
           </tr>
           <% } %>
